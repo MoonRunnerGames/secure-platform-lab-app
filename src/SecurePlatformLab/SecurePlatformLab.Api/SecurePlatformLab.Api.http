@@ -1,0 +1,6 @@
+@SecurePlatformLab.Api_HostAddress = http://localhost:5134
+
+GET {{SecurePlatformLab.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
