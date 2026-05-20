@@ -1,0 +1,55 @@
+﻿<h3>Item</h3>
+
+@code {
+
+}
+@page "/items"
+@using SecurePlatformLab.Frontend.Models
+@inject IHttpClientFactory HttpClientFactory
+
+<h1>Items</h1>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <p style="color: red;">@errorMessage</p>
+}
+else if (items is null)
+{
+    <p>Loading items...</p>
+}
+else if (items.Count == 0)
+{
+    <p>No items found.</p>
+}
+else
+{
+    <ul>
+        @foreach (var item in items)
+        {
+            <li>
+                <strong>@item.Name</strong>
+                <span> - @item.Status</span>
+                <small> (@item.CreatedAtUtc.ToString("u"))</small>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Item>? items;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient("SecurePlatformLab.Api");
+
+            items = await client.GetFromJsonAsync<List<Item>>("/Items") ?? [];
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load items: {ex.Message}";
+        }
+    }
+}
