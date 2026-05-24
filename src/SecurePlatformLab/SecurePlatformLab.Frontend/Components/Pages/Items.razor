@@ -1,19 +1,29 @@
-﻿<h3>Item</h3>
-
-@code {
-
-}
-@page "/items"
+﻿@page "/items"
+@rendermode InteractiveServer
+@using System.Net.Http.Json
 @using SecurePlatformLab.Frontend.Models
 @inject IHttpClientFactory HttpClientFactory
 
 <h1>Items</h1>
 
+<h3>Create Item</h3>
+
+<div style="margin-bottom: 20px;">
+    <input @bind="newItemName" placeholder="Enter item name" />
+    <button @onclick="CreateItemAsync">Create</button>
+</div>
+
 @if (!string.IsNullOrWhiteSpace(errorMessage))
 {
     <p style="color: red;">@errorMessage</p>
 }
-else if (items is null)
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <p style="color: green;">@successMessage</p>
+}
+
+@if (items is null)
 {
     <p>Loading items...</p>
 }
@@ -37,9 +47,16 @@ else
 
 @code {
     private List<Item>? items;
+    private string? newItemName;
     private string? errorMessage;
+    private string? successMessage;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadItemsAsync();
+    }
+
+    private async Task LoadItemsAsync()
     {
         try
         {
@@ -50,6 +67,43 @@ else
         catch (Exception ex)
         {
             errorMessage = $"Failed to load items: {ex.Message}";
+        }
+    }
+
+    private async Task CreateItemAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (string.IsNullOrWhiteSpace(newItemName))
+        {
+            errorMessage = "Item name is required.";
+            return;
+        }
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient("SecurePlatformLab.Api");
+
+            var response = await client.PostAsJsonAsync("/Items", new
+            {
+                Name = newItemName
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = $"Failed to create item. Status code: {response.StatusCode}";
+                return;
+            }
+
+            successMessage = $"Created item: {newItemName}";
+            newItemName = string.Empty;
+
+            await LoadItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to create item: {ex.Message}";
         }
     }
 }
